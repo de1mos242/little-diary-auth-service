@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 from flask import request
 from flask_restful import Resource
 from flask_jwt_extended import jwt_required
@@ -11,6 +13,7 @@ class UserSchema(ma.ModelSchema):
 
     id = ma.Int(dump_only=True)
     password = ma.String(load_only=True, required=True)
+    external_uuid = ma.UUID(dupm_only=True)
 
     class Meta:
         model = User
@@ -162,6 +165,7 @@ class UserList(Resource):
     def post(self):
         schema = UserSchema()
         user = schema.load(request.json)
+        user.external_uuid = uuid4()
 
         db.session.add(user)
         db.session.commit()

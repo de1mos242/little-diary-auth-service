@@ -18,6 +18,7 @@ setup(
         "passlib",
         "apispec[yaml]",
         "apispec-webframeworks",
+        "psycopg2"
     ],
     entry_points={
         "console_scripts": [

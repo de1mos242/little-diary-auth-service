@@ -1,4 +1,5 @@
 import json
+from uuid import uuid4
 
 import pytest
 
@@ -7,10 +8,13 @@ from auth_api.extensions import db as _db
 from auth_api.models import User
 
 
-@pytest.fixture
+@pytest.fixture(scope='session')
 def app():
     app = create_app(testing=True)
-    return app
+    ctx = app.app_context()
+    ctx.push()
+    yield app
+    ctx.pop()
 
 
 @pytest.fixture
@@ -19,24 +23,47 @@ def client(app):
         yield client
 
 
-@pytest.fixture
+@pytest.fixture(scope='session')
 def db(app):
-    with app.app_context():
-        _db.drop_all()
-        _db.create_all()
-        yield _db
+    exclude_tables = ["alembic_version"]
+
+    meta = _db.metadata
+    for table in reversed(meta.sorted_tables):
+        if table.name not in exclude_tables:
+            _db.session.execute(table.delete())
+
+    _db.session.commit()
+    return _db
+
+
+@pytest.fixture(scope='function')
+def session(db):
+    connection = db.engine.connect()
+    transaction = connection.begin()
+
+    options = dict(bind=connection, binds={})
+    session = db.create_scoped_session(options=options)
+
+    db.session = session
+
+    yield session
+
+    transaction.rollback()
+    connection.close()
+    session.remove()
 
 
 @pytest.fixture
-def admin_user(db):
+def admin_user(session):
     user = User(
         username='admin',
         email='admin@admin.com',
-        password='admin'
+        password='admin',
+        external_uuid=uuid4()
     )
 
-    db.session.add(user)
-    db.session.commit()
+    session.add(user)
+    session.commit()
 
     return user
 

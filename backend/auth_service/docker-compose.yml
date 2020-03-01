@@ -30,6 +30,7 @@ services:
       - ./.flaskenv
     volumes:
       - ./auth_api:/code/auth_api
+      - ./migrations:/code/migrations
     ports:
       - "41002:5000"
     logging:

@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 import click
 from flask.cli import FlaskGroup
 
@@ -21,7 +23,7 @@ def init():
     from auth_api.models import User
 
     click.echo("create user")
-    user = User(username="admin", email="de1m0s242@gmail.com", password="qwerty", active=True)
+    user = User(username="admin", email="de1m0s242@gmail.com", password="qwerty", active=True, external_uuid=uuid4())
     db.session.add(user)
     db.session.commit()
     click.echo("created user admin")

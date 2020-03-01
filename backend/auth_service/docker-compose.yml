@@ -1,0 +1,29 @@
+# WARNING: this file is not suitable for production, please use with caution
+version: '3'
+
+services:
+  db:
+    image: postgres:11.5-alpine
+    ports:
+      - "75432:5432"
+    environment:
+      POSTGRES_PASSWORD: qwerty
+      POSTGRES_DB: auth_db
+    logging:
+      options:
+        max-size: 500m
+  web:
+    image: auth_api
+    build: .
+    command: gunicorn -b 0.0.0.0:5000 auth_api.wsgi:app
+    env_file:
+      - ./.flaskenv
+    volumes:
+      - ./auth_api:/code/auth_api
+    ports:
+      - "5000:5000"
+    logging:
+      options:
+        max-size: 500m
+    depends_on:
+      - db

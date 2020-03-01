@@ -1,0 +1,9 @@
+default_context:
+    project_name: "auth_service"
+    app_name: "auth_api"
+    python_version: "3.8"
+    admin_user_username: "admin"
+    admin_user_email: "de1m0s242@gmail.com"
+    admin_user_password: "qwerty"
+    use_celery: "no"
+    wsgi_server: "gunicorn"

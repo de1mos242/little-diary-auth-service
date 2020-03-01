@@ -1,6 +1,10 @@
 FROM python:3.8
 MAINTAINER Denis Yakovlev de1m0s242@gmail.com
 
+RUN apt-get update && apt-get install -y \
+  libpq-dev \
+  python-dev
+
 RUN mkdir /code
 WORKDIR /code
 

@@ -12,3 +12,4 @@ apispec[yaml]
 apispec-webframeworks
 tox
 gunicorn
+psycopg2

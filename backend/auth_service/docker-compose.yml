@@ -2,10 +2,20 @@
 version: '3'
 
 services:
+  test_db:
+    image: postgres:11.5-alpine
+    ports:
+      - "41101:5432"
+    environment:
+      POSTGRES_PASSWORD: qwerty
+      POSTGRES_DB: auth_db
+    logging:
+      options:
+        max-size: 500m
   db:
     image: postgres:11.5-alpine
     ports:
-      - "75432:5432"
+      - "41001:5432"
     environment:
       POSTGRES_PASSWORD: qwerty
       POSTGRES_DB: auth_db
@@ -21,7 +31,7 @@ services:
     volumes:
       - ./auth_api:/code/auth_api
     ports:
-      - "5000:5000"
+      - "41002:5000"
     logging:
       options:
         max-size: 500m

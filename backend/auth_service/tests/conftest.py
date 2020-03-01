@@ -1,9 +1,10 @@
 import json
+
 import pytest
 
-from auth_api.models import User
 from auth_api.app import create_app
 from auth_api.extensions import db as _db
+from auth_api.models import User
 
 
 @pytest.fixture
@@ -13,16 +14,17 @@ def app():
 
 
 @pytest.fixture
+def client(app):
+    with app.test_client() as client:
+        yield client
+
+
+@pytest.fixture
 def db(app):
-    _db.app = app
-
     with app.app_context():
+        _db.drop_all()
         _db.create_all()
-
-    yield _db
-
-    _db.session.close()
-    _db.drop_all()
+        yield _db
 
 
 @pytest.fixture

@@ -3,10 +3,12 @@ from uuid import uuid4
 from flask import request
 from flask_restful import Resource
 from flask_jwt_extended import jwt_required
+from marshmallow import validate
 
 from auth_api.models import User
 from auth_api.extensions import ma, db
 from auth_api.commons.pagination import paginate
+from auth_api.models.roles_enum import roles, Roles
 
 
 class UserSchema(ma.ModelSchema):
@@ -14,6 +16,7 @@ class UserSchema(ma.ModelSchema):
     id = ma.Int(dump_only=True)
     password = ma.String(load_only=True, required=True)
     external_uuid = ma.UUID(dupm_only=True)
+    role = ma.String(validate=validate.OneOf(roles), default=Roles.User)
 
     class Meta:
         model = User

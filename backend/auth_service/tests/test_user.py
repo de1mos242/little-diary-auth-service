@@ -5,6 +5,7 @@ import pytest
 from pytest_factoryboy import register
 
 from auth_api.models import User
+from auth_api.models.roles_enum import Roles
 
 
 @register
@@ -77,11 +78,11 @@ def test_delete_user(client, db, user, admin_headers):
 @pytest.mark.usefixtures("session")
 def test_create_user(client, db, admin_headers):
     # test bad data
-    data = {"username": "created"}
+    data = {"username": "new user"}
     rep = client.post("/api/v1/users", json=data, headers=admin_headers)
     assert rep.status_code == 400
 
-    data["password"] = "admin"
+    data["password"] = "user_password"
     data["email"] = "create@mail.com"
 
     rep = client.post("/api/v1/users", json=data, headers=admin_headers)
@@ -90,8 +91,27 @@ def test_create_user(client, db, admin_headers):
     data = rep.get_json()
     user = db.session.query(User).filter_by(id=data["user"]["id"]).first()
 
-    assert user.username == "created"
+    assert user.username == "new user"
     assert user.email == "create@mail.com"
+    assert user.role == Roles.User
+
+
+@pytest.mark.usefixtures("session")
+def test_create_admin_user(client, db, admin_headers):
+    data = {"username": "new admin",
+            "password": "admin",
+            "email": "admin@mail.com",
+            "role": "admin"}
+
+    rep = client.post("/api/v1/users", json=data, headers=admin_headers)
+    assert rep.status_code == 201
+
+    data = rep.get_json()
+    user = db.session.query(User).filter_by(id=data["user"]["id"]).first()
+
+    assert user.username == "new admin"
+    assert user.email == "admin@mail.com"
+    assert user.role == Roles.Admin
 
 
 @pytest.mark.usefixtures("session")

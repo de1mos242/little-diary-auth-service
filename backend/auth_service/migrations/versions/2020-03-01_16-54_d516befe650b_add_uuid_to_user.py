@@ -1,4 +1,4 @@
-"""empty message
+"""add uuid to user
 
 Revision ID: d516befe650b
 Revises: 3c403aee5d08

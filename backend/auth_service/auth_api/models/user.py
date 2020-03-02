@@ -1,6 +1,7 @@
 from sqlalchemy.dialects.postgresql import UUID
 
 from auth_api.extensions import db, pwd_context
+from auth_api.models.roles_enum import Roles, roles_enum
 
 
 class User(db.Model):
@@ -10,6 +11,7 @@ class User(db.Model):
     password = db.Column(db.String(255), nullable=False)
     active = db.Column(db.Boolean, default=True)
     external_uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False)
+    role = db.Column(roles_enum, nullable=False, default=Roles.User)
 
     def __init__(self, **kwargs):
         super(User, self).__init__(**kwargs)

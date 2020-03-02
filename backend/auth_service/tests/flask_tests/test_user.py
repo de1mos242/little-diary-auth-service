@@ -1,25 +1,7 @@
-from uuid import uuid4
-
-import factory
-import pytest
-from pytest_factoryboy import register
-
 from auth_api.models import User
 from auth_api.models.roles_enum import Roles
 
 
-@register
-class UserFactory(factory.Factory):
-    username = factory.Sequence(lambda n: "user%d" % n)
-    email = factory.Sequence(lambda n: "user%d@mail.com" % n)
-    password = "mypwd"
-    external_uuid = factory.LazyFunction(uuid4)
-
-    class Meta:
-        model = User
-
-
-@pytest.mark.usefixtures("session")
 def test_get_user(client, db, user, admin_headers):
     # test 404
     rep = client.get("/api/v1/users/100000", headers=admin_headers)
@@ -38,7 +20,6 @@ def test_get_user(client, db, user, admin_headers):
     assert data["active"] == user.active
 
 
-@pytest.mark.usefixtures("session")
 def test_put_user(client, db, user, admin_headers):
     # test 404
     rep = client.put("/api/v1/users/100000", headers=admin_headers)
@@ -59,7 +40,6 @@ def test_put_user(client, db, user, admin_headers):
     assert data["active"] == user.active
 
 
-@pytest.mark.usefixtures("session")
 def test_delete_user(client, db, user, admin_headers):
     # test 404
     rep = client.delete("/api/v1/users/100000", headers=admin_headers)
@@ -75,7 +55,6 @@ def test_delete_user(client, db, user, admin_headers):
     assert db.session.query(User).filter_by(id=user_id).first() is None
 
 
-@pytest.mark.usefixtures("session")
 def test_create_user(client, db, admin_headers):
     # test bad data
     data = {"username": "new user"}
@@ -96,7 +75,6 @@ def test_create_user(client, db, admin_headers):
     assert user.role == Roles.User
 
 
-@pytest.mark.usefixtures("session")
 def test_create_admin_user(client, db, admin_headers):
     data = {"username": "new admin",
             "password": "admin",
@@ -114,7 +92,6 @@ def test_create_admin_user(client, db, admin_headers):
     assert user.role == Roles.Admin
 
 
-@pytest.mark.usefixtures("session")
 def test_get_all_user(client, db, user_factory, admin_headers):
     users = user_factory.create_batch(30)
 
@@ -127,3 +104,37 @@ def test_get_all_user(client, db, user_factory, admin_headers):
     results = rep.get_json()
     for user in users:
         assert any(u["id"] == user.id for u in results["results"])
+
+
+def test_change_password_by_user(client, db, regular_user, user_headers):
+    old_password_hash = regular_user.password
+    resp = client.put(f"/api/v1/users/{regular_user.id}/password",
+                      json={"new_password": "Brand new password"},
+                      headers=user_headers)
+    assert resp.status_code == 204
+
+    assert regular_user.password != old_password_hash
+
+
+def test_change_password_by_admin(client, db, regular_user, admin_headers):
+    old_password_hash = regular_user.password
+    resp = client.put(f"/api/v1/users/{regular_user.id}/password",
+                      json={"new_password": "Brand new password"},
+                      headers=admin_headers)
+    assert resp.status_code == 204
+
+    assert regular_user.password != old_password_hash
+
+
+def test_change_password_to_another_user(client, db, regular_user, user_headers, user_factory):
+    another_user = user_factory()
+    db.session.add(another_user)
+    db.session.commit()
+
+    old_password_hash = another_user.password
+    resp = client.put(f"/api/v1/users/{another_user.id}/password",
+                      json={"new_password": "Brand new password"},
+                      headers=user_headers)
+    assert resp.status_code == 403
+
+    assert another_user.password == old_password_hash

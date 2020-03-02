@@ -8,10 +8,9 @@ from flask_jwt_extended import (
     get_raw_jwt,
 )
 
-from auth_api.models import User
-from auth_api.extensions import pwd_context, jwt, apispec
 from auth_api.auth.helpers import revoke_token, is_token_revoked, add_token_to_database
-
+from auth_api.extensions import pwd_context, jwt, apispec
+from auth_api.models import User
 
 blueprint = Blueprint("auth", __name__, url_prefix="/auth")
 
@@ -67,7 +66,7 @@ def login():
     if user is None or not pwd_context.verify(password, user.password):
         return jsonify({"msg": "Bad credentials"}), 400
 
-    access_token = create_access_token(identity=user.id)
+    access_token = create_access_token(identity=user.id, user_claims=get_user_claims(user.id))
     refresh_token = create_refresh_token(identity=user.id)
     add_token_to_database(access_token, app.config["JWT_IDENTITY_CLAIM"])
     add_token_to_database(refresh_token, app.config["JWT_IDENTITY_CLAIM"])
@@ -106,7 +105,7 @@ def refresh():
           description: unauthorized
     """
     current_user = get_jwt_identity()
-    access_token = create_access_token(identity=current_user)
+    access_token = create_access_token(identity=current_user, user_claims=get_user_claims(current_user))
     ret = {"access_token": access_token}
     add_token_to_database(access_token, app.config["JWT_IDENTITY_CLAIM"])
     return jsonify(ret), 200
@@ -188,3 +187,8 @@ def register_views():
     apispec.spec.path(view=refresh, app=app)
     apispec.spec.path(view=revoke_access_token, app=app)
     apispec.spec.path(view=revoke_refresh_token, app=app)
+
+
+def get_user_claims(identity):
+    user = user_loader_callback(identity)
+    return {"role": user.role, "uuid": user.external_uuid}

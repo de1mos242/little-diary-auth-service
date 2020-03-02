@@ -1,18 +1,18 @@
 from uuid import uuid4
 
 from flask import request
-from flask_restful import Resource
 from flask_jwt_extended import jwt_required
+from flask_restful import Resource
 from marshmallow import validate
 
-from auth_api.models import User
-from auth_api.extensions import ma, db
+from auth_api.commons.decorators import user_or_admin
 from auth_api.commons.pagination import paginate
+from auth_api.extensions import ma, db
+from auth_api.models import User
 from auth_api.models.roles_enum import roles, Roles
 
 
 class UserSchema(ma.ModelSchema):
-
     id = ma.Int(dump_only=True)
     password = ma.String(load_only=True, required=True)
     external_uuid = ma.UUID(dupm_only=True)
@@ -21,6 +21,10 @@ class UserSchema(ma.ModelSchema):
     class Meta:
         model = User
         sqla_session = db.session
+
+
+class PasswordChangeSchema(ma.Schema):
+    new_password = ma.String(load_only=True, required=True)
 
 
 class UserResource(Resource):
@@ -115,6 +119,40 @@ class UserResource(Resource):
         db.session.commit()
 
         return {"msg": "user deleted"}
+
+
+class UserPassword(Resource):
+    """Change user password
+
+    ---
+    put:
+      tags:
+        - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              PasswordChangeSchema
+      responses:
+        204:
+          description: password changed
+        403:
+          description: access denied
+        404:
+          description: user does not exists
+    """
+
+    method_decorators = [user_or_admin, jwt_required]
+
+    def put(self, user_id):
+        schema = PasswordChangeSchema()
+        request_data = schema.load(request.json)
+        user = User.query.get_or_404(user_id)
+        user.update_password(request_data['new_password'])
+
+        db.session.commit()
+
+        return "", 204
 
 
 class UserList(Resource):

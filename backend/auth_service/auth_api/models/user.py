@@ -1,6 +1,7 @@
 from sqlalchemy.dialects.postgresql import UUID
 
-from auth_api.extensions import db, pwd_context
+from auth_api.commons.utils import hash_password
+from auth_api.extensions import db
 from auth_api.models.roles_enum import Roles, roles_enum
 
 
@@ -15,7 +16,10 @@ class User(db.Model):
 
     def __init__(self, **kwargs):
         super(User, self).__init__(**kwargs)
-        self.password = pwd_context.hash(self.password)
+        self.password = hash_password(self.password)
+
+    def update_password(self, new_password):
+        self.password = hash_password(new_password)
 
     def __repr__(self):
         return "<User %s %s>" % self.username, self.external_uuid

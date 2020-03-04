@@ -1,3 +1,0 @@
-pytest
-factory_boy
-pytest-factoryboy

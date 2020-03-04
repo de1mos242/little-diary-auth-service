@@ -12,7 +12,7 @@ from auth_api.models import User
 from auth_api.models.roles_enum import roles, Roles
 
 
-class UserSchema(ma.ModelSchema):
+class UserSchema(ma.SQLAlchemyAutoSchema):
     id = ma.Int(dump_only=True)
     password = ma.String(load_only=True, required=True)
     external_uuid = ma.UUID(dupm_only=True)
@@ -21,6 +21,8 @@ class UserSchema(ma.ModelSchema):
     class Meta:
         model = User
         sqla_session = db.session
+        load_instance = True
+        include_relationships = True
 
 
 class PasswordChangeSchema(ma.Schema):

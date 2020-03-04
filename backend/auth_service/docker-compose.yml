@@ -3,7 +3,7 @@ version: '3'
 
 services:
   test_db:
-    image: postgres:11.5-alpine
+    image: postgres:12.2-alpine
     ports:
       - "41101:5432"
     environment:
@@ -13,7 +13,7 @@ services:
       options:
         max-size: 500m
   db:
-    image: postgres:11.5-alpine
+    image: postgres:12.2-alpine
     ports:
       - "41001:5432"
     environment:

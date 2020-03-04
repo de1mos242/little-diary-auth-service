@@ -1,8 +1,8 @@
-from flask import jsonify, render_template, Blueprint
 from apispec import APISpec
 from apispec.exceptions import APISpecError
 from apispec.ext.marshmallow import MarshmallowPlugin
 from apispec_webframeworks.flask import FlaskPlugin
+from flask import jsonify, render_template, Blueprint
 
 
 class FlaskRestfulPlugin(FlaskPlugin):
@@ -25,6 +25,7 @@ class FlaskRestfulPlugin(FlaskPlugin):
             raise APISpecError("Could not find endpoint for view {0}".format(view))
 
         # WARNING: Assume 1 rule per view function for now
+        # pylint: disable=protected-access
         rule = app.url_map._rules_by_endpoint[endpoint][0]
         return rule
 

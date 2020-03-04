@@ -1,0 +1,6 @@
+pytest
+pylint-flask
+pylint-flask-sqlalchemy
+factory_boy
+pytest-factoryboy
+pylint

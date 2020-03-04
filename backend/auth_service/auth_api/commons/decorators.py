@@ -17,3 +17,14 @@ def user_or_admin(func):
         flask_restful.abort(403)
 
     return wrapper
+
+
+def admin_role(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        user = get_current_user()
+        if user.role == Roles.Admin:
+            return func(*args, **kwargs)
+        flask_restful.abort(403)
+
+    return wrapper

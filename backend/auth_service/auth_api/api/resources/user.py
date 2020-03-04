@@ -5,7 +5,7 @@ from flask_jwt_extended import jwt_required
 from flask_restful import Resource
 from marshmallow import validate
 
-from auth_api.commons.decorators import user_or_admin
+from auth_api.commons.decorators import user_or_admin, admin_role
 from auth_api.commons.pagination import paginate
 from auth_api.extensions import ma, db
 from auth_api.models import User
@@ -97,7 +97,9 @@ class UserResource(Resource):
           description: user does not exists
     """
 
-    method_decorators = [jwt_required]
+    method_decorators = {'get': [user_or_admin, jwt_required],
+                         'put': [admin_role, jwt_required],
+                         'delete': [admin_role, jwt_required]}
 
     def get(self, user_id):
         schema = UserSchema()
@@ -196,7 +198,7 @@ class UserList(Resource):
                   user: UserSchema
     """
 
-    method_decorators = [jwt_required]
+    method_decorators = [admin_role, jwt_required]
 
     def get(self):
         schema = UserSchema(many=True)

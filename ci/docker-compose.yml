@@ -35,5 +35,6 @@ services:
       - .flaskenv
     volumes:
       - ./reports/test-report.html:/code/test-report.html
+      - ./reports/assets/:/code/assets/
     depends_on:
       - migration

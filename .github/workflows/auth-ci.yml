@@ -17,3 +17,7 @@ jobs:
       run: docker-compose -f ci/docker-compose.yml run migration
     - name: Run tests
       run: docker-compose -f ci/docker-compose.yml run tests
+    - uses: actions/upload-artifact@v1
+      with:
+        name: check_results
+        path: ci/reports

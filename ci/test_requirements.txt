@@ -1,6 +1,7 @@
 pytest
-pylint-flask
-pylint-flask-sqlalchemy
+pytest-html
 factory_boy
 pytest-factoryboy
 pylint
+pylint-flask
+pylint-flask-sqlalchemy

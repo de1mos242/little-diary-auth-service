@@ -1,4 +1,4 @@
-![CI Auth Service -2](https://github.com/de1mos242/little_diary/workflows/CI%20Auth%20Service%20-2/badge.svg)
+![Test workflow](https://github.com/de1mos242/little_diary/workflows/Test%20workflow/badge.svg)
 
 Authorization service for little dairy project.
 It is responsible for:

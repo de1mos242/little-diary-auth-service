@@ -17,7 +17,7 @@ services:
       dockerfile: ci/Dockerfile
     command: pylint auth_api --rcfile=pylintrc 2>&1 | tee pylint.txt
     volumes:
-      - reports/pylint.txt:/code/pylint.txt
+      - ./reports/pylint.txt:/code/pylint.txt
   migration:
     image: auth_api
     build:
@@ -34,6 +34,6 @@ services:
     env_file:
       - .flaskenv
     volumes:
-      - reports/test-report.html:/code/test-report.html
+      - ./reports/test-report.html:/code/test-report.html
     depends_on:
       - migration

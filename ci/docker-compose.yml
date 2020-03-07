@@ -15,7 +15,7 @@ services:
     build: ..
     command: /code/run_tests.sh
     env_file:
-      - ./.flaskenv
+      - .flaskenv
     volumes:
       - ../auth_api:/code/auth_api
       - ../migrations:/code/migrations

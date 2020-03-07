@@ -27,7 +27,7 @@ services:
     build: .
     command: gunicorn -b 0.0.0.0:5000 auth_api.wsgi:app
     env_file:
-      - ./.flaskenv
+      - .flaskenv
     volumes:
       - ./auth_api:/code/auth_api
       - ./migrations:/code/migrations

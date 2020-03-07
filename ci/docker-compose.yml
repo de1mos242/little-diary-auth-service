@@ -12,10 +12,10 @@ services:
         max-size: 500m
   web:
     image: auth_api
-    build: ..
+    build: ../backend/auth_service
     command: /code/run_tests.sh
     env_file:
-      - ./.flaskenv
+      - .flaskenv
     volumes:
       - ../auth_api:/code/auth_api
       - ../migrations:/code/migrations

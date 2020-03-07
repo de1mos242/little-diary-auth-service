@@ -21,14 +21,14 @@ services:
     build:
       context: ..
       dockerfile: ci/Dockerfile
-    command: auth_api db upgrade
+    command: bash -c 'while !</dev/tcp/db/5432; do sleep 1; done; auth_api db upgrade'
     env_file:
       - .flaskenv
     depends_on:
       - db
   tests:
     image: auth_api
-    command: pytest tests
+    command: bash -c 'while !</dev/tcp/db/5432; do sleep 1; done; pytest tests'
     env_file:
       - .flaskenv
     depends_on:

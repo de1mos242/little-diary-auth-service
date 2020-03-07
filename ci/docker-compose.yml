@@ -12,11 +12,15 @@ services:
         max-size: 500m
   lint:
     image: auth_api
-    build: .
+    build:
+      context: ..
+      dockerfile: ci/Dockerfile
     command: pylint auth_api --rcfile=pylintrc
   migration:
     image: auth_api
-    build: .
+    build:
+      context: ..
+      dockerfile: ci/Dockerfile
     command: auth_api db upgrade
     env_file:
       - .flaskenv

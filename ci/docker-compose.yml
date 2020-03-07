@@ -10,18 +10,22 @@ services:
     logging:
       options:
         max-size: 500m
-  web:
+  lint:
     image: auth_api
-    build: ..
-    command: /code/run_tests.sh
+    build: .
+    command: pylint auth_api --rcfile=pylintrc
+  migration:
+    image: auth_api
+    build: .
+    command: auth_api db upgrade
     env_file:
       - .flaskenv
-    volumes:
-      - ../auth_api:/code/auth_api
-      - ../migrations:/code/migrations
-      - ../tests:/code/tests
-      - ./run_tests.sh:/code/run_tests.sh
-      - ./test_requirements.txt:/code/test_requirements.txt
-      - ./pylintrc:/code/pylintrc
+    depends_on:
+      - db
+  tests:
+    image: auth_api
+    command: pytest tests
+    env_file:
+      - .flaskenv
     depends_on:
       - db

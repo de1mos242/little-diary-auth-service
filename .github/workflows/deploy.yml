@@ -1,0 +1,18 @@
+name: Deploy image
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: jerray/publish-docker-action@master
+      with:
+        username: ${{ secrets.DOCKER_HUB_ID }}
+        password: ${{ secrets.DOCKER_HUB_TOKEN }}
+        repository: de1m0s/little-diary-auth-service
+        auto_tag: true

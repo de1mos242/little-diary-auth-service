@@ -6,7 +6,9 @@ import os
 
 ENV = os.getenv("FLASK_ENV")
 DEBUG = ENV == "development"
-SECRET_KEY = os.getenv("SECRET_KEY")
+JWT_ALGORITHM = os.getenv("JWT_ALGORITHM")
+JWT_PRIVATE_KEY = os.getenv("JWT_PRIVATE_KEY", '').replace('\\n', '\n')
+JWT_PUBLIC_KEY = os.getenv("JWT_PUBLIC_KEY", '').replace('\\n', '\n')
 
 SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URI")
 SQLALCHEMY_TRACK_MODIFICATIONS = False

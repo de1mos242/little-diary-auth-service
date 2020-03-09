@@ -89,7 +89,7 @@ def admin_user(session):
 
 
 @pytest.fixture
-def user_headers(regular_user, client):
+def regular_user_headers(regular_user, client):
     data = {
         'username': regular_user.username,
         'password': 'user_password'

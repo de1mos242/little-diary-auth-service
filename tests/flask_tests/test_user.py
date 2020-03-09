@@ -2,7 +2,7 @@ from auth_api.models import User
 from auth_api.models.roles_enum import Roles
 
 
-def test_get_user(client, db, user, admin_headers, user_headers, regular_user):
+def test_get_user(client, db, user, admin_headers, regular_user_headers, regular_user):
     # test 404
     rep = client.get("/api/v1/users/100000", headers=admin_headers)
     assert rep.status_code == 404
@@ -11,11 +11,11 @@ def test_get_user(client, db, user, admin_headers, user_headers, regular_user):
     db.session.commit()
 
     # test 403
-    rep = client.get("/api/v1/users/%d" % user.id, headers=user_headers)
+    rep = client.get("/api/v1/users/%d" % user.id, headers=regular_user_headers)
     assert rep.status_code == 403
 
     # test access from user himself
-    rep = client.get("/api/v1/users/%d" % regular_user.id, headers=user_headers)
+    rep = client.get("/api/v1/users/%d" % regular_user.id, headers=regular_user_headers)
     assert rep.status_code == 200
 
     # test access from admin user
@@ -28,7 +28,7 @@ def test_get_user(client, db, user, admin_headers, user_headers, regular_user):
     assert data["active"] == user.active
 
 
-def test_put_user(client, db, user, admin_headers, user_headers):
+def test_put_user(client, db, user, admin_headers, regular_user_headers):
     # test 404
     rep = client.put("/api/v1/users/100000", headers=admin_headers)
     assert rep.status_code == 404
@@ -39,7 +39,7 @@ def test_put_user(client, db, user, admin_headers, user_headers):
     data = {"username": "updated"}
 
     # test 403
-    rep = client.put("/api/v1/users/%d" % user.id, json=data, headers=user_headers)
+    rep = client.put("/api/v1/users/%d" % user.id, json=data, headers=regular_user_headers)
     assert rep.status_code == 403
 
     # test update user
@@ -52,7 +52,7 @@ def test_put_user(client, db, user, admin_headers, user_headers):
     assert data["active"] == user.active
 
 
-def test_delete_user(client, db, user, admin_headers, user_headers):
+def test_delete_user(client, db, user, admin_headers, regular_user_headers):
     # test 404
     rep = client.delete("/api/v1/users/100000", headers=admin_headers)
     assert rep.status_code == 404
@@ -61,7 +61,7 @@ def test_delete_user(client, db, user, admin_headers, user_headers):
     db.session.commit()
 
     # test 403
-    rep = client.delete("/api/v1/users/100000", headers=user_headers)
+    rep = client.delete("/api/v1/users/100000", headers=regular_user_headers)
     assert rep.status_code == 403
 
     # test get_user
@@ -71,7 +71,7 @@ def test_delete_user(client, db, user, admin_headers, user_headers):
     assert db.session.query(User).filter_by(id=user_id).first() is None
 
 
-def test_create_user(client, db, admin_headers, user_headers):
+def test_create_user(client, db, admin_headers, regular_user_headers):
     # test bad data
     data = {"username": "new user"}
     rep = client.post("/api/v1/users", json=data, headers=admin_headers)
@@ -81,7 +81,7 @@ def test_create_user(client, db, admin_headers, user_headers):
     data["email"] = "create@mail.com"
 
     # test 403
-    rep = client.post("/api/v1/users", json=data, headers=user_headers)
+    rep = client.post("/api/v1/users", json=data, headers=regular_user_headers)
     assert rep.status_code == 403
 
     rep = client.post("/api/v1/users", json=data, headers=admin_headers)
@@ -95,14 +95,14 @@ def test_create_user(client, db, admin_headers, user_headers):
     assert user.role == Roles.User
 
 
-def test_create_admin_user(client, db, admin_headers, user_headers):
+def test_create_admin_user(client, db, admin_headers, regular_user_headers):
     data = {"username": "new admin",
             "password": "admin",
             "email": "admin@mail.com",
             "role": "admin"}
 
     # test 403
-    rep = client.post("/api/v1/users", json=data, headers=user_headers)
+    rep = client.post("/api/v1/users", json=data, headers=regular_user_headers)
     assert rep.status_code == 403
 
     rep = client.post("/api/v1/users", json=data, headers=admin_headers)
@@ -116,14 +116,14 @@ def test_create_admin_user(client, db, admin_headers, user_headers):
     assert user.role == Roles.Admin
 
 
-def test_get_all_user(client, db, user_factory, admin_headers, user_headers):
+def test_get_all_user(client, db, user_factory, admin_headers, regular_user_headers):
     users = user_factory.create_batch(30)
 
     db.session.add_all(users)
     db.session.commit()
 
     # test 403
-    rep = client.get("/api/v1/users", headers=user_headers)
+    rep = client.get("/api/v1/users", headers=regular_user_headers)
     assert rep.status_code == 403
 
     rep = client.get("/api/v1/users", headers=admin_headers)
@@ -134,14 +134,14 @@ def test_get_all_user(client, db, user_factory, admin_headers, user_headers):
         assert any(u["id"] == user.id for u in results["results"])
 
 
-def test_change_password(client, db, regular_user, user_headers, admin_headers, user):
+def test_change_password(client, db, regular_user, regular_user_headers, admin_headers, user):
     db.session.add(user)
     db.session.commit()
 
     old_password_hash = user.password
     resp = client.put(f"/api/v1/users/{user.id}/password",
                       json={"new_password": "Brand new password"},
-                      headers=user_headers)
+                      headers=regular_user_headers)
     assert resp.status_code == 403
 
     assert user.password == old_password_hash
@@ -149,7 +149,7 @@ def test_change_password(client, db, regular_user, user_headers, admin_headers, 
     old_password_hash = regular_user.password
     resp = client.put(f"/api/v1/users/{regular_user.id}/password",
                       json={"new_password": "Brand new password"},
-                      headers=user_headers)
+                      headers=regular_user_headers)
     assert resp.status_code == 204
 
     assert regular_user.password != old_password_hash
@@ -161,3 +161,26 @@ def test_change_password(client, db, regular_user, user_headers, admin_headers, 
     assert resp.status_code == 204
 
     assert regular_user.password != old_password_hash
+
+
+def test_get_public_user(client, db, user, admin_user, regular_user_headers):
+    db.session.add(user)
+    db.session.commit()
+
+    # test 404
+    rep = client.get(f"/api/v1/users/public?uuids=12345678-1234-5678-9012-123456789012&uuids={user.external_uuid}",
+                     headers=regular_user_headers)
+    assert rep.status_code == 404, rep.data
+
+    rep = client.get("/api/v1/users/public?uuids=%s&uuids=%s&uuids=%s" % (user.external_uuid,
+                                                                          admin_user.external_uuid,
+                                                                          user.external_uuid),
+                     headers=regular_user_headers)
+    assert rep.status_code == 200
+
+    data = rep.get_json()
+    assert len(data) == 2
+    values = {item['uuid']: item['username'] for item in data}
+    assert set(values.keys()) == {str(user.external_uuid), str(admin_user.external_uuid)}
+    assert values[str(user.external_uuid)] == user.username
+    assert values[str(admin_user.external_uuid)] == admin_user.username

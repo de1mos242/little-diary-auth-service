@@ -22,4 +22,4 @@ class User(db.Model):
         self.password = hash_password(new_password)
 
     def __repr__(self):
-        return "<User %s %s>" % self.username, self.external_uuid
+        return "<User %s %s>" % (self.username, self.external_uuid)

@@ -2,8 +2,9 @@ from uuid import uuid4
 
 from flask import request
 from flask_jwt_extended import jwt_required
-from flask_restful import Resource
+from flask_restful import Resource, abort
 from marshmallow import validate
+from webargs.flaskparser import use_kwargs
 
 from auth_api.commons.decorators import user_or_admin, admin_role
 from auth_api.commons.pagination import paginate
@@ -23,6 +24,11 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
         sqla_session = db.session
         load_instance = True
         include_relationships = True
+
+
+class UserPublicSchema(ma.Schema):
+    external_uuid = ma.UUID(data_key='uuid')
+    username = ma.String()
 
 
 class PasswordChangeSchema(ma.Schema):
@@ -157,6 +163,46 @@ class UserPassword(Resource):
         db.session.commit()
 
         return "", 204
+
+
+class UserPublicInfo(Resource):
+    """Get public info for users
+
+    ---
+    get:
+      tags:
+        - api
+      parameters:
+        - in: query
+          name: uuids
+          schema:
+            type: array
+            items:
+              type: string
+              format: uuid
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    user: UserPublicSchema
+        404:
+          description: user does not exists
+    """
+
+    method_decorators = {'get': [use_kwargs({'uuids': ma.List(ma.UUID(), required=True)}, location='query'),
+                                 jwt_required]}
+
+    def get(self, uuids):
+        schema = UserPublicSchema(many=True)
+        users = User.query.filter(User.external_uuid.in_(uuids)).all()
+        if not len(users) == len(set(uuids)):
+            abort(404)
+        return schema.dump(users)
 
 
 class UserList(Resource):

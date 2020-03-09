@@ -13,3 +13,4 @@ apispec-webframeworks
 tox
 gunicorn
 psycopg2-binary
+webargs

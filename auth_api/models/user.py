@@ -13,6 +13,7 @@ class User(db.Model):
     active = db.Column(db.Boolean, default=True)
     external_uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False)
     role = db.Column(roles_enum, nullable=False, default=Roles.User)
+    resources = db.Column(db.ARRAY(db.Text), default=[])
 
     def __init__(self, **kwargs):
         super(User, self).__init__(**kwargs)

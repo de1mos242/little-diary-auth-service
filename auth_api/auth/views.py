@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from flask import request, jsonify, Blueprint, current_app as app
 from flask_jwt_extended import (
     create_access_token,
@@ -11,6 +13,7 @@ from flask_jwt_extended import (
 from auth_api.auth.helpers import revoke_token, is_token_revoked, add_token_to_database
 from auth_api.extensions import pwd_context, jwt, apispec
 from auth_api.models import User
+from auth_api.models.roles_enum import Roles
 
 blueprint = Blueprint("auth", __name__, url_prefix="/auth")
 
@@ -66,13 +69,33 @@ def login():
     if user is None or not pwd_context.verify(password, user.password):
         return jsonify({"msg": "Bad credentials"}), 400
 
-    access_token = create_access_token(identity=user.id, user_claims=get_user_claims(user.id))
-    refresh_token = create_refresh_token(identity=user.id)
+    access_expire = get_access_token_expire_delta(user)
+    access_token = create_access_token(identity=user.id, user_claims=get_user_claims(user),
+                                       expires_delta=timedelta(seconds=access_expire))
+    refresh_expire = get_refresh_expire_delta(user)
+    refresh_token = create_refresh_token(identity=user.id,
+                                         expires_delta=timedelta(seconds=refresh_expire))
     add_token_to_database(access_token, app.config["JWT_IDENTITY_CLAIM"])
     add_token_to_database(refresh_token, app.config["JWT_IDENTITY_CLAIM"])
 
     ret = {"access_token": access_token, "refresh_token": refresh_token}
     return jsonify(ret), 200
+
+
+def get_refresh_expire_delta(user):
+    if user.role == Roles.Tech:
+        refresh_expire = app.config["JWT_TECH_REFRESH_TOKEN_EXPIRE_SECONDS"]
+    else:
+        refresh_expire = app.config["JWT_USER_REFRESH_TOKEN_EXPIRE_SECONDS"]
+    return refresh_expire
+
+
+def get_access_token_expire_delta(user):
+    if user.role == Roles.Tech:
+        access_expire = app.config["JWT_TECH_ACCESS_TOKEN_EXPIRE_SECONDS"]
+    else:
+        access_expire = app.config["JWT_USER_ACCESS_TOKEN_EXPIRE_SECONDS"]
+    return access_expire
 
 
 @blueprint.route("/refresh", methods=["POST"])
@@ -105,7 +128,10 @@ def refresh():
           description: unauthorized
     """
     current_user = get_jwt_identity()
-    access_token = create_access_token(identity=current_user, user_claims=get_user_claims(current_user))
+    user = User.query.filter_by(id=current_user).first()
+    access_expire = get_access_token_expire_delta(user)
+    access_token = create_access_token(identity=current_user, user_claims=get_user_claims(user),
+                                       expires_delta=timedelta(seconds=access_expire))
     ret = {"access_token": access_token}
     add_token_to_database(access_token, app.config["JWT_IDENTITY_CLAIM"])
     return jsonify(ret), 200
@@ -189,6 +215,5 @@ def register_views():
     apispec.spec.path(view=revoke_refresh_token, app=app)
 
 
-def get_user_claims(identity):
-    user = user_loader_callback(identity)
-    return {"role": user.role, "uuid": user.external_uuid}
+def get_user_claims(user):
+    return {"role": user.role, "uuid": user.external_uuid, "resources": user.resources}

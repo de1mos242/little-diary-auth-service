@@ -13,7 +13,7 @@ def user_or_admin(func):
         if user.role == Roles.Admin:
             return func(*args, **kwargs)
         # pylint: disable=used-before-assignment
-        if (request_user_id := kwargs.get('user_id', None)) and request_user_id == user.id:
+        if (request_user_uuid := kwargs.get('user_uuid', None)) and request_user_uuid == user.external_uuid:
             return func(*args, **kwargs)
         return flask_restful.abort(403)
 

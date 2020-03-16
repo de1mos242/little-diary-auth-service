@@ -3,6 +3,7 @@ from uuid import uuid4
 import click
 from flask.cli import FlaskGroup
 
+from auth_api import config
 from auth_api.app import create_app
 
 
@@ -22,12 +23,21 @@ def init():
     from auth_api.extensions import db
     from auth_api.models import User
 
-    click.echo("create user")
-    user = User(username="admin", email="de1m0s242@gmail.com", password="qwerty", active=True, external_uuid=uuid4(),
+    click.echo("create users")
+    user = User(username="admin", email="de1m0s242@gmail.com", password=config.ADMIN_USER_DEFAULT_PASSWORD,
+                active=True,
+                external_uuid=uuid4(),
                 role="admin")
     db.session.add(user)
+    measurement_user = User(username="measurement tech user", email="measurement.little_diary@de1mos.net",
+                            password=config.MEASUREMENT_TECH_USER_DEFAULT_PASSWORD,
+                            active=True,
+                            external_uuid=uuid4(),
+                            resources=["family_read"],
+                            role="tech")
+    db.session.add(measurement_user)
     db.session.commit()
-    click.echo("created user admin")
+    click.echo("users created")
 
 
 if __name__ == "__main__":

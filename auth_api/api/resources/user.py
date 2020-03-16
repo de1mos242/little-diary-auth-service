@@ -1,5 +1,3 @@
-from uuid import uuid4
-
 from flask import request
 from flask_jwt_extended import jwt_required
 from flask_restful import Resource, abort
@@ -14,9 +12,8 @@ from auth_api.models.roles_enum import roles, Roles
 
 
 class UserSchema(ma.SQLAlchemyAutoSchema):
-    id = ma.Int(dump_only=True)
     password = ma.String(load_only=True, required=True)
-    external_uuid = ma.UUID(dupm_only=True)
+    external_uuid = ma.UUID(dupm_only=True, data_key="uuid")
     role = ma.String(validate=validate.OneOf(roles), default=Roles.User)
     resources = ma.List(ma.String(), default=[])
 
@@ -25,6 +22,7 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
         sqla_session = db.session
         load_instance = True
         include_relationships = True
+        exclude = ('id',)
 
 
 class UserPublicSchema(ma.Schema):
@@ -45,9 +43,10 @@ class UserResource(Resource):
         - api
       parameters:
         - in: path
-          name: user_id
+          name: user_uuid
           schema:
-            type: integer
+            type: string
+            format: uuid
       responses:
         200:
           content:
@@ -61,11 +60,13 @@ class UserResource(Resource):
     put:
       tags:
         - api
+      description: create or update user
       parameters:
         - in: path
-          name: user_id
+          name: user_uuid
           schema:
-            type: integer
+            type: string
+            format: uuid
       requestBody:
         content:
           application/json:
@@ -89,9 +90,10 @@ class UserResource(Resource):
         - api
       parameters:
         - in: path
-          name: user_id
+          name: user_uuid
           schema:
-            type: integer
+            type: string
+            format: uuid
       responses:
         200:
           content:
@@ -110,22 +112,35 @@ class UserResource(Resource):
                          'put': [admin_role, jwt_required],
                          'delete': [admin_role, jwt_required]}
 
-    def get(self, user_id):
+    def get(self, user_uuid):
         schema = UserSchema()
-        user = User.query.get_or_404(user_id)
+        user = User.query.filter(User.external_uuid == user_uuid).first_or_404()
         return {"user": schema.dump(user)}
 
-    def put(self, user_id):
+    def put(self, user_uuid):
         schema = UserSchema(partial=True)
-        user = User.query.get_or_404(user_id)
-        user = schema.load(request.json, instance=user)
+        user = User.query.filter(User.external_uuid == user_uuid).first()
+        if not user:
+            create_schema = UserSchema()
+            user = create_schema.load(request.json)
+            if User.query.filter(User.username == user.username).first() is not None:
+                return 409, "Username already exists"
+            if User.query.filter(User.email == user.email).first() is not None:
+                return 409, "Email already exists"
+
+            user.external_uuid = user_uuid
+            db.session.add(user)
+            result_text = "user created"
+        else:
+            user = schema.load(request.json, instance=user)
+            result_text = "user updated"
 
         db.session.commit()
 
-        return {"msg": "user updated", "user": schema.dump(user)}
+        return {"msg": result_text, "user": schema.dump(user)}
 
-    def delete(self, user_id):
-        user = User.query.get_or_404(user_id)
+    def delete(self, user_uuid):
+        user = User.query.filter(User.external_uuid == user_uuid).first_or_404()
         db.session.delete(user)
         db.session.commit()
 
@@ -139,6 +154,12 @@ class UserPassword(Resource):
     put:
       tags:
         - api
+      parameters:
+        - in: path
+          name: user_uuid
+          schema:
+            type: string
+            format: uuid
       requestBody:
         content:
           application/json:
@@ -155,10 +176,10 @@ class UserPassword(Resource):
 
     method_decorators = [user_or_admin, jwt_required]
 
-    def put(self, user_id):
+    def put(self, user_uuid):
         schema = PasswordChangeSchema()
         request_data = schema.load(request.json)
-        user = User.query.get_or_404(user_id)
+        user = User.query.filter(User.external_uuid == user_uuid).first_or_404()
         user.update_password(request_data['new_password'])
 
         db.session.commit()
@@ -226,25 +247,6 @@ class UserList(Resource):
                         type: array
                         items:
                           $ref: '#/components/schemas/UserSchema'
-    post:
-      tags:
-        - api
-      requestBody:
-        content:
-          application/json:
-            schema:
-              UserSchema
-      responses:
-        201:
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  msg:
-                    type: string
-                    example: user created
-                  user: UserSchema
     """
 
     method_decorators = [admin_role, jwt_required]
@@ -253,13 +255,3 @@ class UserList(Resource):
         schema = UserSchema(many=True)
         query = User.query
         return paginate(query, schema)
-
-    def post(self):
-        schema = UserSchema()
-        user = schema.load(request.json)
-        user.external_uuid = uuid4()
-
-        db.session.add(user)
-        db.session.commit()
-
-        return {"msg": "user created", "user": schema.dump(user)}, 201

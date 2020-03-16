@@ -7,6 +7,7 @@ flask-migrate
 flask-sqlalchemy
 flask-marshmallow
 flask-jwt-extended
+Flask-UUID
 gunicorn
 marshmallow>=3.5.1
 marshmallow-sqlalchemy

@@ -9,9 +9,9 @@ from auth_api.extensions import apispec
 blueprint = Blueprint("api", __name__, url_prefix="/api/v1")
 api = Api(blueprint)
 
-api.add_resource(UserPassword, "/users/<int:user_id>/password")
+api.add_resource(UserPassword, "/users/<uuid:user_uuid>/password")
 api.add_resource(UserPublicInfo, "/users/public")
-api.add_resource(UserResource, "/users/<int:user_id>")
+api.add_resource(UserResource, "/users/<uuid:user_uuid>")
 api.add_resource(UserList, "/users")
 
 

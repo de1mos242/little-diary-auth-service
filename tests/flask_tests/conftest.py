@@ -89,6 +89,14 @@ def admin_user(session):
 
 
 @pytest.fixture
+def tech_user(session):
+    user = UserFactory.create(role=Roles.Tech, password="tech", resources=['family_read'])
+    session.add(user)
+    session.commit()
+    return user
+
+
+@pytest.fixture
 def regular_user_headers(regular_user, client):
     data = {
         'username': regular_user.username,

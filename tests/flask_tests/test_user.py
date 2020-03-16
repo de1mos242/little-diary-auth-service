@@ -2,7 +2,7 @@ from auth_api.models import User
 from auth_api.models.roles_enum import Roles
 
 
-def test_get_user(client, db, user, admin_headers, regular_user_headers, regular_user):
+def test_get_user(client, db, user, admin_headers, regular_user_headers, regular_user, tech_user):
     # test 404
     rep = client.get("/api/v1/users/100000", headers=admin_headers)
     assert rep.status_code == 404
@@ -26,6 +26,15 @@ def test_get_user(client, db, user, admin_headers, regular_user_headers, regular
     assert data["username"] == user.username
     assert data["email"] == user.email
     assert data["active"] == user.active
+
+    rep = client.get("/api/v1/users/%d" % tech_user.id, headers=admin_headers)
+    assert rep.status_code == 200
+
+    data = rep.get_json()["user"]
+    assert data["resources"] == tech_user.resources
+    assert data["username"] == tech_user.username
+    assert data["email"] == tech_user.email
+    assert data["active"] == tech_user.active
 
 
 def test_put_user(client, db, user, admin_headers, regular_user_headers):
@@ -93,6 +102,24 @@ def test_create_user(client, db, admin_headers, regular_user_headers):
     assert user.username == "new user"
     assert user.email == "create@mail.com"
     assert user.role == Roles.User
+
+
+def test_create_tech_user(client, db, admin_headers):
+    data = {"username": "new tech",
+            "password": "tech_pass",
+            "email": "create@mail.com",
+            "role": Roles.Tech,
+            "resources": ["resource_item"]}
+    rep = client.post("/api/v1/users", json=data, headers=admin_headers)
+    assert rep.status_code == 201
+
+    data = rep.get_json()
+    user = db.session.query(User).filter_by(id=data["user"]["id"]).first()
+
+    assert user.username == "new tech"
+    assert user.email == "create@mail.com"
+    assert user.role == Roles.Tech
+    assert user.resources == ["resource_item"]
 
 
 def test_create_admin_user(client, db, admin_headers, regular_user_headers):

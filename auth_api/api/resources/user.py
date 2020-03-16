@@ -18,6 +18,7 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
     password = ma.String(load_only=True, required=True)
     external_uuid = ma.UUID(dupm_only=True)
     role = ma.String(validate=validate.OneOf(roles), default=Roles.User)
+    resources = ma.List(ma.String(), default=[])
 
     class Meta:
         model = User

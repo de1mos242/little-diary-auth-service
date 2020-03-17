@@ -1,4 +1,4 @@
-"""empty message
+"""add tech role and resources
 
 Revision ID: adb8d84fee4e
 Revises: 5658753ce8cb

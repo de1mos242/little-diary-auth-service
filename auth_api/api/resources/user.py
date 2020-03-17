@@ -83,6 +83,16 @@ class UserResource(Resource):
                     type: string
                     example: user updated
                   user: UserSchema
+        201:
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  msg:
+                    type: string
+                    example: user created
+                  user: UserSchema
         404:
           description: user does not exists
     delete:
@@ -124,20 +134,22 @@ class UserResource(Resource):
             create_schema = UserSchema()
             user = create_schema.load(request.json)
             if User.query.filter(User.username == user.username).first() is not None:
-                return 409, "Username already exists"
+                return "Username already exists", 409
             if User.query.filter(User.email == user.email).first() is not None:
-                return 409, "Email already exists"
+                return "Email already exists", 409
 
             user.external_uuid = user_uuid
             db.session.add(user)
             result_text = "user created"
+            status = 201
         else:
             user = schema.load(request.json, instance=user)
             result_text = "user updated"
+            status = 200
 
         db.session.commit()
 
-        return {"msg": result_text, "user": schema.dump(user)}
+        return {"msg": result_text, "user": schema.dump(user)}, status
 
     def delete(self, user_uuid):
         user = User.query.filter(User.external_uuid == user_uuid).first_or_404()

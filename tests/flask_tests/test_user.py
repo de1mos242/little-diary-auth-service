@@ -97,7 +97,7 @@ def test_create_user(client, db, admin_headers, regular_user_headers):
     assert rep.status_code == 403, rep.data
 
     rep = client.put(f"/api/v1/users/{created_uuid}", json=data, headers=admin_headers)
-    assert rep.status_code == 200
+    assert rep.status_code == 201
 
     data = rep.get_json()
     user = db.session.query(User).filter_by(external_uuid=data["user"]["uuid"]).first()
@@ -116,7 +116,7 @@ def test_create_tech_user(client, db, admin_headers):
             "role": Roles.Tech,
             "resources": ["resource_item"]}
     rep = client.put(f"/api/v1/users/{created_uuid}", json=data, headers=admin_headers)
-    assert rep.status_code == 200
+    assert rep.status_code == 201
 
     data = rep.get_json()
     user = db.session.query(User).filter_by(external_uuid=data["user"]["uuid"]).first()
@@ -140,7 +140,7 @@ def test_create_admin_user(client, db, admin_headers, regular_user_headers):
     assert rep.status_code == 403
 
     rep = client.put(f"/api/v1/users/{created_uuid}", json=data, headers=admin_headers)
-    assert rep.status_code == 200
+    assert rep.status_code == 201
 
     data = rep.get_json()
     user = db.session.query(User).filter_by(external_uuid=data["user"]["uuid"]).first()

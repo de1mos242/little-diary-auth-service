@@ -2,6 +2,7 @@ apispec[yaml]
 apispec-webframeworks
 cryptography
 flask
+flask-cors
 flask-restful
 flask-migrate
 flask-sqlalchemy

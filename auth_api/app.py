@@ -1,4 +1,5 @@
 from flask import Flask
+from flask_cors import CORS
 
 from auth_api import auth, api
 from auth_api.extensions import db, jwt, migrate, apispec
@@ -16,6 +17,7 @@ def create_app(testing=False, cli=False):
     configure_extensions(app, cli)
     configure_apispec(app)
     register_blueprints(app)
+    CORS(app)
 
     return app
 

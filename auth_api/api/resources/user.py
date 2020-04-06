@@ -221,9 +221,7 @@ class UserPublicInfo(Resource):
               schema:
                 type: array
                 items:
-                  type: object
-                  properties:
-                    user: UserPublicSchema
+                  $ref: '#/components/schemas/UserPublicSchema'
         404:
           description: user does not exists
     """

@@ -23,13 +23,20 @@ def init():
     from auth_api.extensions import db
     from auth_api.models import User
 
+    admin_username = "admin"
+    measurement_tech_user = "measurement_tech_user"
+
+    if len(User.query.filter(User.username.in_(admin_username, measurement_tech_user))) > 0:
+        click.echo("users already been created")
+        return
+
     click.echo("create users")
-    user = User(username="admin", email="de1m0s242@gmail.com", password=config.ADMIN_USER_DEFAULT_PASSWORD,
+    user = User(username=admin_username, email="de1m0s242@gmail.com", password=config.ADMIN_USER_DEFAULT_PASSWORD,
                 active=True,
                 external_uuid=uuid4(),
                 role="admin")
     db.session.add(user)
-    measurement_user = User(username="measurement tech user", email="measurement.little_diary@de1mos.net",
+    measurement_user = User(username=measurement_tech_user, email="measurement.little_diary@de1mos.net",
                             password=config.MEASUREMENT_TECH_USER_DEFAULT_PASSWORD,
                             active=True,
                             external_uuid=uuid4(),

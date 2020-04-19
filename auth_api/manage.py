@@ -26,7 +26,7 @@ def init():
     admin_username = "admin"
     measurement_tech_user = "measurement_tech_user"
 
-    if len(User.query.filter(User.username.in_(admin_username, measurement_tech_user))) > 0:
+    if User.query.filter(User.username.in_((admin_username, measurement_tech_user))).first():
         click.echo("users already been created")
         return
 

@@ -1,7 +1,7 @@
 from flask import Flask
 from flask_cors import CORS
 
-from auth_api import auth, api
+from auth_api import auth, api, status
 from auth_api.extensions import db, jwt, migrate, apispec
 
 
@@ -56,4 +56,5 @@ def register_blueprints(app):
     """register all blueprints for application
     """
     app.register_blueprint(auth.views.blueprint)
+    app.register_blueprint(status.views.blueprint)
     app.register_blueprint(api.views.blueprint)

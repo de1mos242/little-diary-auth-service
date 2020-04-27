@@ -26,7 +26,7 @@ def health():
     if not user_probe:
         return "User not found", 500
 
-    return "", 204
+    return "", 200
 
 
 @blueprint.before_app_first_request

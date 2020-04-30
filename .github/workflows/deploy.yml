@@ -10,6 +10,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    - name: Set env
+      run: echo ::set-env name=RELEASE_VERSION::${GITHUB_REF:11}
     - uses: jerray/publish-docker-action@master
       with:
         username: ${{ secrets.DOCKER_HUB_ID }}
@@ -22,4 +24,4 @@ jobs:
         token: ${{ secrets.REPO_ACCESS_TOKEN }}
         repository: de1mos242/little-diary-root
         event-type: auth-service-released
-        client-payload: '{"version": "${GITHUB_REF:11}"}'
+        client-payload: '{"version": "${{ env.RELEASE_VERSION }}"}'

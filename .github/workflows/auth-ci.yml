@@ -9,6 +9,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+      with:
+        fetch-depth: '0'
     - name: Build base image
       run: docker build -t 'auth-service-base-img' .
     - name: Run linters
@@ -21,3 +23,10 @@ jobs:
       with:
         name: check_results
         path: ci/reports
+    - name: Bump version and push tag
+      uses: anothrNick/github-tag-action@1.17.2
+      env:
+        GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
+        WITH_V: true
+        DEFAULT_BUMP: patch
+        RELEASE_BRANCHES: master

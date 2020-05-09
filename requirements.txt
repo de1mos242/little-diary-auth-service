@@ -9,8 +9,10 @@ flask-sqlalchemy
 flask-marshmallow
 flask-jwt-extended
 Flask-UUID
+google-auth
+google_auth_oauthlib
 gunicorn
-marshmallow>=3.5.1
+marshmallow
 marshmallow-sqlalchemy
 passlib
 python-dotenv

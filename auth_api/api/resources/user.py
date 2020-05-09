@@ -9,6 +9,8 @@ from auth_api.commons.pagination import paginate
 from auth_api.extensions import ma, db
 from auth_api.models import User
 from auth_api.models.roles_enum import roles, Roles
+from auth_api.services.user_service import is_login_free, is_email_free, create_internal_user, update_internal_user, \
+    update_password
 
 
 class UserSchema(ma.SQLAlchemyAutoSchema):
@@ -21,8 +23,15 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
         model = User
         sqla_session = db.session
         load_instance = True
-        include_relationships = True
         exclude = ('id',)
+
+
+class InternalUserSchema(ma.Schema):
+    username = ma.String(required=True)
+    password = ma.String(load_only=True, required=True)
+    email = ma.Email(required=True)
+    role = ma.String(validate=validate.OneOf(roles), missing=Roles.User)
+    resources = ma.List(ma.String(), default=[])
 
 
 class UserPublicSchema(ma.Schema):
@@ -128,28 +137,36 @@ class UserResource(Resource):
         return {"user": schema.dump(user)}
 
     def put(self, user_uuid):
-        schema = UserSchema(partial=True)
+        schema = InternalUserSchema(partial=True)
         user = User.query.filter(User.external_uuid == user_uuid).first()
         if not user:
-            create_schema = UserSchema()
-            user = create_schema.load(request.json)
-            if User.query.filter(User.username == user.username).first() is not None:
+            create_schema = InternalUserSchema()
+            user_dto = create_schema.load(request.json)
+            if 'username' in user_dto and not is_login_free(user_dto['username']):
                 return "Username already exists", 409
-            if User.query.filter(User.email == user.email).first() is not None:
+            if 'email' in user_dto and not is_email_free(user_dto['email']):
                 return "Email already exists", 409
 
-            user.external_uuid = user_uuid
+            user = create_internal_user(external_uuid=user_uuid, **user_dto)
             db.session.add(user)
             result_text = "user created"
             status = 201
         else:
-            user = schema.load(request.json, instance=user)
+            user_dto = schema.load(request.json)
+            if 'username' in user_dto and not is_login_free(user_dto['username'], user.id):
+                return "Username already exists", 409
+            if 'email' in user_dto and not is_email_free(user_dto['email'], user.id):
+                return "Email already exists", 409
+            update_internal_user(user, **user_dto)
             result_text = "user updated"
             status = 200
 
         db.session.commit()
 
-        return {"msg": result_text, "user": schema.dump(user)}, status
+        return_schema = UserSchema()
+        all = User.query.all()
+        uuid = user.external_uuid
+        return {"msg": result_text, "user": return_schema.dump(user)}, status
 
     def delete(self, user_uuid):
         user = User.query.filter(User.external_uuid == user_uuid).first_or_404()
@@ -192,7 +209,7 @@ class UserPassword(Resource):
         schema = PasswordChangeSchema()
         request_data = schema.load(request.json)
         user = User.query.filter(User.external_uuid == user_uuid).first_or_404()
-        user.update_password(request_data['new_password'])
+        update_password(user, request_data['new_password'])
 
         db.session.commit()
 

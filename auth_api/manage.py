@@ -1,10 +1,11 @@
-from uuid import uuid4
-
 import click
 from flask.cli import FlaskGroup
 
 from auth_api import config
 from auth_api.app import create_app
+from auth_api.models.resources_enum import Resources
+from auth_api.models.roles_enum import Roles
+from auth_api.services.user_service import create_internal_user
 
 
 def create_auth_api(info):
@@ -31,20 +32,13 @@ def init():
         return
 
     click.echo("create users")
-    user = User(username=admin_username, email="de1m0s242@gmail.com", password=config.ADMIN_USER_DEFAULT_PASSWORD,
-                active=True,
-                external_uuid=uuid4(),
-                role="admin")
-    db.session.add(user)
-    measurement_user = User(username=measurement_tech_user, email="measurement.little_diary@de1mos.net",
-                            password=config.MEASUREMENT_TECH_USER_DEFAULT_PASSWORD,
-                            active=True,
-                            external_uuid=uuid4(),
-                            resources=["family_read"],
-                            role="tech")
-    db.session.add(measurement_user)
+    create_internal_user(username=admin_username, email="admin@ld.de1mos.net",
+                         password=config.ADMIN_USER_DEFAULT_PASSWORD, role=Roles.Admin)
+    create_internal_user(username=measurement_tech_user, email="measurement-tech@ld.de1mos.net",
+                         password=config.MEASUREMENT_TECH_USER_DEFAULT_PASSWORD, role=Roles.Tech,
+                         resources=[Resources.FAMILY_READ.value])
     db.session.commit()
-    click.echo("users created")
+    click.echo("users were created")
 
 
 if __name__ == "__main__":

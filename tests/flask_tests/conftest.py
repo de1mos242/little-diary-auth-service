@@ -5,10 +5,12 @@ import pytest
 from pytest_factoryboy import register
 
 from auth_api.app import create_app
+from auth_api.commons.utils import hash_password
 from auth_api.extensions import db as _db
-from auth_api.models import User
+from auth_api.models import User, InternalUser
+from auth_api.models.resources_enum import Resources
 from auth_api.models.roles_enum import Roles
-from tests.flask_tests.factories import UserFactory
+from tests.flask_tests.factories import UserFactory, InternalUserFactory
 
 
 @pytest.fixture(scope='session')
@@ -60,13 +62,17 @@ def session(db):
 def regular_user(session):
     user = User(
         username='regular',
-        email='user@mail.com',
-        password='user_password',
         external_uuid=uuid4(),
         role=Roles.User
     )
+    internal_user = InternalUser(
+        login=user.username,
+        email='user@mail.com',
+        password=hash_password('user_password'),
+        user=user)
 
     session.add(user)
+    session.add(internal_user)
     session.commit()
 
     return user
@@ -76,13 +82,18 @@ def regular_user(session):
 def admin_user(session):
     user = User(
         username='admin',
-        email='admin@admin.com',
-        password='admin',
         external_uuid=uuid4(),
         role=Roles.Admin
     )
 
+    internal_user = InternalUser(
+        login=user.username,
+        email='admin@admin.com',
+        password=hash_password('admin'),
+        user=user)
+
     session.add(user)
+    session.add(internal_user)
     session.commit()
 
     return user
@@ -90,8 +101,14 @@ def admin_user(session):
 
 @pytest.fixture
 def tech_user(session):
-    user = UserFactory.create(role=Roles.Tech, password="tech", resources=['family_read'])
+    user = UserFactory.create(role=Roles.Tech, resources=[Resources.FAMILY_READ.value])
+    internal_user = InternalUser(login=user.username,
+                                 email="tech@mail.com",
+                                 password=hash_password('tech'),
+                                 user=user)
+
     session.add(user)
+    session.add(internal_user)
     session.commit()
     return user
 
@@ -154,3 +171,4 @@ def admin_refresh_headers(admin_user, client):
 
 
 register(UserFactory)
+register(InternalUserFactory)

@@ -4,4 +4,7 @@ Authorization service for little dairy project.
 It is responsible for:
 1. Login users and issue JWT for them
 2. CRUD for users for admin role
-3. Show info and change password for user 
+3. Show info and change password for user
+
+
+make init

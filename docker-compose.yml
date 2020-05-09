@@ -4,6 +4,7 @@ version: '3'
 services:
   test_db:
     image: postgres:12.2-alpine
+    command: postgres -c log_statement=all
     ports:
       - "41101:5432"
     environment:

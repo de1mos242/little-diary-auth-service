@@ -10,7 +10,7 @@ from auth_api.extensions import db as _db
 from auth_api.models import User, InternalUser
 from auth_api.models.resources_enum import Resources
 from auth_api.models.roles_enum import Roles
-from tests.flask_tests.factories import UserFactory, InternalUserFactory
+from tests.flask_tests.factories import UserFactory, InternalUserFactory, GoogleUserFactory
 
 
 @pytest.fixture(scope='session')
@@ -172,3 +172,4 @@ def admin_refresh_headers(admin_user, client):
 
 register(UserFactory)
 register(InternalUserFactory)
+register(GoogleUserFactory)

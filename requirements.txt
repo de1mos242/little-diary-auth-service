@@ -1,6 +1,7 @@
 apispec[yaml]
 apispec-webframeworks
 cryptography
+dependencies
 flask
 flask-cors
 flask-restful
@@ -17,5 +18,7 @@ marshmallow-sqlalchemy
 passlib
 python-dotenv
 psycopg2-binary
+returns
+stories
 tox
 webargs

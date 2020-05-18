@@ -1,4 +1,5 @@
 from sqlalchemy import ForeignKey
+from sqlalchemy.orm import relationship, backref
 
 from auth_api.extensions import db
 
@@ -15,3 +16,4 @@ class GoogleUser(db.Model):
     locale = db.Column(db.String(80))
 
     user_id = db.Column(db.Integer, ForeignKey('user.id', ondelete='CASCADE'), unique=True)
+    user = relationship("User", backref=backref("google_users"), foreign_keys=[user_id])

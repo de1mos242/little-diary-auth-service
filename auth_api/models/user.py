@@ -10,7 +10,7 @@ from auth_api.models.roles_enum import Roles, roles_enum
 
 # https://stackoverflow.com/a/39757388/1641461
 if TYPE_CHECKING:
-    from auth_api.models import InternalUser
+    from auth_api.models import InternalUser, GoogleUser
 
 
 class User(db.Model):
@@ -27,5 +27,11 @@ class User(db.Model):
     @property
     def internal_user(self) -> Optional[InternalUser]:
         if self.internal_users:
-            return self.internal_users[0]
+            return self.internal_user[0]
+        return None
+
+    @property
+    def google_user(self) -> Optional[GoogleUser]:
+        if self.google_users:
+            return self.google_users[0]
         return None

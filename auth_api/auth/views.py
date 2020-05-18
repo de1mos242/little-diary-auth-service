@@ -10,13 +10,13 @@ from flask_jwt_extended import (
     get_jwt_identity,
     get_raw_jwt,
 )
-from google_auth_oauthlib.flow import Flow
 
 from auth_api.auth.helpers import revoke_token, is_token_revoked, add_token_to_database
 from auth_api.extensions import jwt, apispec
 from auth_api.models import User
 from auth_api.models.roles_enum import Roles
 from auth_api.services.user_service import login_internal_user
+from auth_api.stories.google_login import GoogleLoginStory
 
 blueprint = Blueprint("auth", __name__, url_prefix="/auth")
 
@@ -243,66 +243,15 @@ def login_google():
     if not request.is_json:
         return jsonify({"msg": "Missing JSON in request"}), 400
 
-    authorization_code = request.json.get("code", None)
-    if not authorization_code:
-        return jsonify({"msg": "Missing authorization_code"}), 400
+    story: GoogleLoginStory = app.extensions['di_container'].google_login_story
+    result = story.login.run(user_data=request.json)
+    if result.is_failure:
+        if result.failed_on(GoogleLoginStory.Errors.missing_authorization_code):
+            return jsonify({"err": "Missing authorization code"}), 400
+        else:
+            return jsonify({"err": result.reason}), 500
 
-    client_config = {
-        "web":
-            {
-                "client_id": "CLIENT_ID",
-                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-                "token_uri": "https://oauth2.googleapis.com/token",
-                "client_secret": "CLIENT_SECRET",
-            }
-    }
-
-    scopes = [
-        "https://www.googleapis.com/auth/userinfo.email",
-        "https://www.googleapis.com/auth/userinfo.profile",
-        "openid",
-    ]
-    flow = Flow.from_client_config(client_config, scopes)
-
-    flow.redirect_uri = "http://localhost:3000"
-
-    flow.fetch_token(code=authorization_code)
-    session = flow.authorized_session()
-    user_info = session.get('https://www.googleapis.com/userinfo/v2/me').json()
-    example_resp = {
-        "email": "de1m0s242@gmail.com",
-        "family_name": "Yakovlev",
-        "given_name": "Denis",
-        "id": "100537797269200712146",
-        "locale": "ru",
-        "name": "Denis Yakovlev",
-        "picture": "https://lh3.googleusercontent.com/a-/AOh14GijOAniLKyRe6AF5VaOLsXygb9i87dgXom8ndQsXA",
-        "verified_email": True
-    }
-
-    # access_expire = get_access_token_expire_delta(app.config["JWT_USER_ACCESS_TOKEN_EXPIRE_SECONDS"])
-    # access_token = create_access_token(identity=user.id, user_claims=get_user_claims(user),
-    #                                    expires_delta=timedelta(seconds=access_expire))
-    # refresh_expire = get_refresh_expire_delta(app.config["JWT_USER_REFRESH_TOKEN_EXPIRE_SECONDS"])
-    # refresh_token = create_refresh_token(identity=user.id,
-    #                                      expires_delta=timedelta(seconds=refresh_expire))
-    # add_token_to_database(access_token, app.config["JWT_IDENTITY_CLAIM"])
-    # add_token_to_database(refresh_token, app.config["JWT_IDENTITY_CLAIM"])
-
-    ret = {
-        "access_token": {
-            "refresh_token": flow.credentials.refresh_token,
-            "token_uri": flow.credentials.token_uri,
-            "id_token": flow.credentials.id_token,
-            "client_id": flow.credentials.client_id,
-            "client_secret": flow.credentials.client_secret,
-            "requires_scopes": flow.credentials.requires_scopes,
-            "scopes": flow.credentials.scopes,
-            "token": flow.credentials.token
-        },
-        "refresh_token": user_info
-    }
-    return jsonify(ret), 200
+    return jsonify(result.value), 200
 
 
 @jwt.user_loader_callback_loader

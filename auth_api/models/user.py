@@ -27,7 +27,7 @@ class User(db.Model):
     @property
     def internal_user(self) -> Optional[InternalUser]:
         if self.internal_users:
-            return self.internal_user[0]
+            return self.internal_users[0]
         return None
 
     @property
